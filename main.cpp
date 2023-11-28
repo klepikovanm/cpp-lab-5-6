@@ -4,11 +4,11 @@ using namespace std;
 //лаб 5
 class Human {
 private://спецификатор доступа, в котором лежат переменные - элементы данных, доступ к которым есть только у методов класса
-    string name;
-    string gender;
-    string race;
+    const char* name;
+    const char* gender;
+    const char* race;
     int age;
-    string country;
+    const char* country;
     float IQ;
 public://спецификатор доступа, который позволяет вызывать другим функциям методы класса
 
@@ -22,7 +22,7 @@ public://спецификатор доступа, который позволя�
         IQ = 0;
     }
     //конструктор с параметрами
-    Human(string h_name, string h_gender, string h_race, int h_age, string h_country, float h_IQ) {
+    Human(const char* h_name, const char* h_gender, const char* h_race, int h_age, const char* h_country, float h_IQ) {
         name = h_name;
         gender = h_gender;
         race = h_race;
@@ -41,7 +41,10 @@ public://спецификатор доступа, который позволя�
     }
     //Деструктор
     ~Human() {
-    
+        delete[] name;
+        delete[] gender;
+        delete[] race;
+        delete[] country;
     }
     
     //Функции для вывода на экран каждого поля
@@ -74,25 +77,25 @@ public://спецификатор доступа, который позволя�
     }
     //функции для редактирования каждого поля
     //set-функции инициализируют элементы данных
-    void setName(string h_name) {
+    void setName(const char* h_name) {
         name = h_name;
     }
-    void setGender(string h_gender) {
+    void setGender(const char* h_gender) {
         gender = h_gender;
     }
-    void setRace(string h_race) {
+    void setRace(const char* h_race) {
         race = h_race;
     }
     void setAge(int h_age) {
         age = h_age;
     }
-    void setCountry(string h_country) {
+    void setCountry(const char* h_country) {
         country = h_country;
     }
     void setIQ(float h_IQ) {
         IQ = h_IQ;
     }
-    void setAll(string h_name, string h_gender, string h_race, int h_age, string h_country, float h_IQ) {
+    void setAll(const char* h_name, const char* h_gender, const char* h_race, int h_age, const char* h_country, float h_IQ) {
         name = h_name;
         gender = h_gender;
         race = h_race;
@@ -100,33 +103,47 @@ public://спецификатор доступа, который позволя�
         country = h_country;
         IQ = h_IQ;
     }
-
     //лаб 6
     //функции для возвращения значений
-    string backName() {
+    const char* backName()const {//пишем в конце const, так как метод не меняет содержимое класса
         return name;
     }
-    string backGender() {
+    const char* backGender()const {
         return gender;
     }
-    string backRace() {
+    const char* backRace()const {
         return race;
     }
-    int backAge() {
+    int backAge()const {
         return age;
     }
-    string backCountry() {
+    const char* backCountry()const {
         return country;
     }
-    float backIQ() {
+    float backIQ()const {
         return IQ;
     }
+    //метод для того, чтобы сверять данные посимвольно, а не по адресам, которые будут переданы в последующие функции
+    static bool equals(const char* first, const char* second) {
+        int i = 0;
+        while (true) {
+            if (first[i] != second[i]) {//если хоть одно несовпадение
+                return false;
+            }
+            if (first[i] == '\0' ) {//если все совпало и мы дошли до конца
+                return true;
+            }
+            i++;
+        }
+    }
     //1)функция среднего IQ для конкретной расы
-    float averageIQforRace(Human* humans, int count, string race) {
+    //static, так как нестатическая для каждого экземпляра класса своя, и компилятор не знает какую выбрать
+    //такая будет одинакова для всех экземпляров
+    static float averageIQforRace(Human* humans, int count, const char* race) {
        float all_IQ = 0;
        int k_humans = 0;
        for (int i=0; i<count; i++) {
-            if (humans[i].backRace() == race) {
+            if (equals(humans[i].backRace(), race)) {
                 all_IQ += humans[i].backIQ();
                 k_humans +=1;
             }
@@ -134,7 +151,7 @@ public://спецификатор доступа, который позволя�
         return all_IQ/k_humans;
     }
     //2)функция среднего возраста людей с IQ > N
-    float averageAgeforIQ(Human* humans, int count, int N) {
+    static float averageAgeforIQ(Human* humans, int count, int N) {
         int all_Age = 0;
         int k_humans = 0;
         for (int i=0; i<count; i++) {
@@ -146,11 +163,11 @@ public://спецификатор доступа, который позволя�
         return all_Age/k_humans;
     }
     //функция среднего IQ для конкретной страны, нужна для функции 3
-    float averageIQforCountry(Human* humans, int count, string country) {
+    static float averageIQforCountry(Human* humans, int count, const char* country) {
         float all_IQ = 0;
         int k_humans = 0;
         for (int i=0; i<count; i++) {
-            if (humans[i].backCountry() == country) {
+            if (equals(humans[i].backCountry(), country)) {
                 all_IQ += humans[i].backIQ();
                 k_humans += 1;
             }
@@ -158,9 +175,10 @@ public://спецификатор доступа, который позволя�
         return all_IQ/k_humans;
     }
     //3)функия списка стран по убыванию среднего IQ населения
-    string* IQinCountries(Human* humans, int count) {
-        //создание списков для стран и срелнего IQ
-        string* countries = new string[count];
+    //int& k_countries - ссылка для того, чтобы можно было использовать переменную, посчитанную в функции, в main
+    static const char** IQinCountries(Human* humans, int count, int& k_countries) {
+        //создание списков для стран и среднего IQ
+        const char** countries = new const char*[count];
         float* averageIQ = new float[count];
         for (int i=0; i<count; i++) {
             countries[i] = humans[i].backCountry();
@@ -169,11 +187,10 @@ public://спецификатор доступа, который позволя�
         //сортировка по убыванию
         for (int i=0; i<count; i++) {
             for (int j=0; j<count-1; j++) {
-                float temp_IQ = 0;
-                string temp_countries = " ";
+                //const char* temp_countries = nullptr; - нейтральное значение
                 if (averageIQ[j] < averageIQ[j+1]) {
-                    temp_IQ = averageIQ[j];
-                    temp_countries = countries[j];
+                    float temp_IQ = averageIQ[j];
+                    const char* temp_countries = countries[j];
 
                     averageIQ[j] = averageIQ[j+1];
                     countries[j] = countries[j+1];
@@ -185,29 +202,28 @@ public://спецификатор доступа, который позволя�
         }
         //отбрасывание повторяющихся стран
         //для этого сначала посчитаем сколько их всего
-        int k_countries = 0;
+        k_countries = 1;
         for (int i=0; i<count-1; i++) {
-            if (countries[i] != countries[i+1]) {
+            if (!equals(countries[i], countries[i+1])) {
                 k_countries += 1;
             }
         }
         //создаем итоговый список
-        string* result = new string[k_countries];
-        for (int i=0; i<k_countries; i++) {
-            for (int j=i; j<count-1; j++) {
-                if (countries[j] != countries[j+1]) {
-                    result[i] = countries[j];
-                    break;
-                }
+        const char** result = new const char*[k_countries];
+        int k=0;
+        for (int i=0; i<count; i++) {
+            if (k>0 && equals(result[k-1], countries[i])) {//ищем первый другой и записываем его
+                continue;
             }
+            result[k] = countries[i];
+            k++;
         }
-        result[k_countries] = countries[count]; //заполняем последнюю страну, до которой могли не дойти в цикле
-        
+        delete[] averageIQ;
+        delete[] countries;
         return result;
     }
 };
 int main() {
-  
     //лаб 5
     Human one;//заполнился по умолчанию
     //меняем все по порядку
@@ -245,17 +261,17 @@ int main() {
         cout << i+1 << ")" << endl;
 
         cout << "Введите ФИО человека " << i+1 << ": "<< endl;
-        string name;
+        char* name = new char[64];
         cin >> name;
         humans[i].setName(name);
-
+        
         cout << "Введите пол человека " << i+1 << ": " << endl;
-        string gender;
+        char* gender = new char[16];
         cin >> gender;
         humans[i].setGender(gender);
 
         cout << "Введите расу человека " << i+1 << ": " << endl;
-        string race;
+        char* race = new char[32];
         cin >> race;
         humans[i].setRace(race);
 
@@ -265,7 +281,7 @@ int main() {
         humans[i].setAge(age);
 
         cout << "Введите страну проживания человека " << i+1 << ": " << endl;
-        string country;
+        char* country = new char[32];
         cin >> country;
         humans[i].setCountry(country);
 
@@ -274,14 +290,28 @@ int main() {
         cin >> IQ;
         humans[i].setIQ(IQ);
     }
-    //средний IQ для расы
-    cout << "Введите расу, чтобы узнать ее средний IQ: ";
-    string race;
-    cin >> race;
-    //cout << "Средний IQ для расы " << race << ": " << Human::averageIQforRace(humans, count, race);
-
     
-    //чистим память
+    //1)средний IQ для расы
+    cout << "Введите расу, чтобы узнать ее средний IQ: ";
+    char* race = new char[32];
+    cin >> race;
+    cout << "Средний IQ для расы " << race << ": " << Human::averageIQforRace(humans, count, race) << endl;
+    
+    //2)Средний возраст людей с IQ > N
+    cout << "Введите уровень IQ и узнайте средний возраст людей с уровнем выше: ";
+    float N;
+    cin >> N;
+    cout << "Средний возраст людей с IQ > " << N << ": " << Human::averageAgeforIQ(humans, count, N) << endl;
+    
+    //3)Список стран по убыванию среднего IQ населения
+    cout << "Список стран по убыванию среднего IQ населения: " << endl;
+    int k_countries;
+    const char** result = Human::IQinCountries(humans, count, k_countries); //вызываем, чтоб посчиталось k_countries и мы получили список
+    for (int i=0; i<k_countries; i++) {
+        cout << i+1 << ") " << result[i] << " - " << Human::averageIQforCountry(humans, count, result[i])<< endl;
+        delete[] result[i];//чистим память
+    } 
+    delete[] result;
     delete[] humans;
     return 0;
 }
