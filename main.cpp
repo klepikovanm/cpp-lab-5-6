@@ -1,44 +1,35 @@
 #include <iostream>
+#include <fstream>
+#include <cstring>
+
 using namespace std;
 
 //лаб 5
 class Human {
 private://спецификатор доступа, в котором лежат переменные - элементы данных, доступ к которым есть только у методов класса
-    const char* name;
-    const char* gender;
-    const char* race;
+    char* name = nullptr;//nullptr-нейтральное значение, так как нам необходимо, чтобы все поля были присвоены по завершению конструктора, а компилятор не знает, что setAll присвоит все значения
+    char* gender = nullptr;
+    char* race = nullptr;
     int age;
-    const char* country;
+    char* country = nullptr;
     float IQ;
 public://спецификатор доступа, который позволяет вызывать другим функциям методы класса
 
     //конструктор без параметров
-    Human() {
-        name = "Имя";
-        gender = "Пол";
-        race = "Раса";
-        age = 0;
-        country = "Страна";
-        IQ = 0;
+    Human(){
+        setAll("Имя", "Пол", "Раса", 0, "Страна", 0);//вызов функции для установки всех значений по умолчанию
     }
+
     //конструктор с параметрами
-    Human(const char* h_name, const char* h_gender, const char* h_race, int h_age, const char* h_country, float h_IQ) {
-        name = h_name;
-        gender = h_gender;
-        race = h_race;
-        age = h_age;
-        country = h_country;
-        IQ = h_IQ;
+    Human(const char* h_name, const char* h_gender, const char* h_race, int h_age, const char* h_country, float h_IQ){
+        setAll(h_name, h_gender, h_race, h_age, h_country, h_IQ);//вызов функции для установки всех введенных значений
     }
+
     //конструктор копирования
-    Human(const Human & copy) {
-        name = copy.name;
-        gender = copy.gender;
-        race = copy.race;
-        age = copy.age;
-        country = copy.country;
-        IQ = copy.IQ;
+    Human(const Human & copy){
+        setAll(copy.name, copy.gender, copy.race, copy.age, copy.country, copy.IQ);//вызов функции для копирования всех значений
     }
+
     //Деструктор
     ~Human() {
         delete[] name;
@@ -46,28 +37,28 @@ public://спецификатор доступа, который позволя�
         delete[] race;
         delete[] country;
     }
-    
+
     //Функции для вывода на экран каждого поля
     //get-функции позволяют посмотреть значения элементов данных
-    void getName() {
+    void getName()const {//пишем в конце const, так как метод не меняет содержимое класса
         cout << "ФИО: " << name << endl;
     }
-    void getGender() {
+    void getGender()const {
         cout << "Пол: " << gender << endl;
     }
-    void getRace() {
+    void getRace()const {
         cout << "Раса: " << race << endl;
     }
-    void getAge() {
+    void getAge()const {
         cout << "Возраст: " << age << endl;
     }
-    void getCountry() {
+    void getCountry()const {
         cout << "Страна проживания: " << country << endl;
     }
-    void getIQ() {
+    void getIQ()const {
         cout << "Уровень IQ: " << IQ << endl;
     }
-    void getAll() {
+    void getAll()const {
         cout << "ФИО: " << name << endl;
         cout << "Пол: " << gender << endl;
         cout << "Раса: " << race << endl;
@@ -75,32 +66,45 @@ public://спецификатор доступа, который позволя�
         cout << "Страна проживания: " << country << endl;
         cout << "Уровень IQ: " << IQ << endl;
     }
+
     //функции для редактирования каждого поля
     //set-функции инициализируют элементы данных
-    void setName(const char* h_name) {
-        name = h_name;
+    void setName(const char* h_name) {//передается строка, из-за чего на нее выделяется память, и деструктор не может удалить строку
+        delete[] name;//чистим память, удаляя прошлые данные
+        name = new char[strlen(h_name) + 1];//выделяем новую память: длина нового значения + \0
+        strcpy(name, h_name);//побайтово копируем новое значение в переменную из char* в char* до \0
     }
+
     void setGender(const char* h_gender) {
-        gender = h_gender;
+        delete[] gender;
+        gender = new char[strlen(h_gender) + 1];
+        strcpy(gender, h_gender);
     }
+
     void setRace(const char* h_race) {
-        race = h_race;
+        delete[] race;
+        race = new char[strlen(h_race) + 1];
+        strcpy(race, h_race);
     }
+
+    void setCountry(const char* h_country) {
+        delete[] country;
+        country = new char[strlen(h_country) + 1];
+        strcpy(country, h_country);
+    }
+
     void setAge(int h_age) {
         age = h_age;
-    }
-    void setCountry(const char* h_country) {
-        country = h_country;
     }
     void setIQ(float h_IQ) {
         IQ = h_IQ;
     }
     void setAll(const char* h_name, const char* h_gender, const char* h_race, int h_age, const char* h_country, float h_IQ) {
-        name = h_name;
-        gender = h_gender;
-        race = h_race;
+        setName(h_name);
+        setGender(h_gender);
+        setRace(h_race);
+        setCountry(h_country);
         age = h_age;
-        country = h_country;
         IQ = h_IQ;
     }
     //лаб 6
@@ -264,16 +268,19 @@ int main() {
         char* name = new char[64];
         cin >> name;
         humans[i].setName(name);
-        
+        delete[] name;//чистим память
+
         cout << "Введите пол человека " << i+1 << ": " << endl;
         char* gender = new char[16];
         cin >> gender;
         humans[i].setGender(gender);
+        delete[] gender;
 
         cout << "Введите расу человека " << i+1 << ": " << endl;
         char* race = new char[32];
         cin >> race;
         humans[i].setRace(race);
+        delete[] race;
 
         cout << "Введите возраст человека " << i+1 << ": " << endl;
         int age;
@@ -284,34 +291,34 @@ int main() {
         char* country = new char[32];
         cin >> country;
         humans[i].setCountry(country);
+        delete[] country;
 
         cout << "Введите уровень IQ человека " << i+1 << ": " << endl;
         float IQ;
         cin >> IQ;
         humans[i].setIQ(IQ);
     }
-    
+
     //1)средний IQ для расы
     cout << "Введите расу, чтобы узнать ее средний IQ: ";
     char* race = new char[32];
     cin >> race;
     cout << "Средний IQ для расы " << race << ": " << Human::averageIQforRace(humans, count, race) << endl;
-    
+
     //2)Средний возраст людей с IQ > N
     cout << "Введите уровень IQ и узнайте средний возраст людей с уровнем выше: ";
     float N;
     cin >> N;
     cout << "Средний возраст людей с IQ > " << N << ": " << Human::averageAgeforIQ(humans, count, N) << endl;
-    
+
     //3)Список стран по убыванию среднего IQ населения
     cout << "Список стран по убыванию среднего IQ населения: " << endl;
     int k_countries;
     const char** result = Human::IQinCountries(humans, count, k_countries); //вызываем, чтоб посчиталось k_countries и мы получили список
     for (int i=0; i<k_countries; i++) {
         cout << i+1 << ") " << result[i] << " - " << Human::averageIQforCountry(humans, count, result[i])<< endl;
-        delete[] result[i];//чистим память
-    } 
-    delete[] result;
+    }
     delete[] humans;
+    delete[] result;
     return 0;
 }
